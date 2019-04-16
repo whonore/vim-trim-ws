@@ -3,9 +3,19 @@ if exists('g:loaded_trim_ws')
 endif
 let g:loaded_trim_ws = 1
 
+let g:trim_ws_print = 1
+
+function! s:refresh_airline()
+    try
+        call airline#update_statusline()
+    catch
+    endtry
+endfunction
+
 " Remember option and print new value
 function! SetTrim(trim, print)
     let b:trim_ws = a:trim
+    call s:refresh_airline()
 
     if a:print
         if a:trim == 0
@@ -25,7 +35,7 @@ function! ToggleTrim()
         let b:trim_ws = 1
     endif
 
-    call SetTrim((b:trim_ws + 1) % 3, 1)
+    call SetTrim((b:trim_ws + 1) % 3, g:trim_ws_print)
 endfunction
 
 " Check if file already has trailing whitespace
@@ -53,6 +63,7 @@ endfunction
 function! DoTrim()
     if !exists('b:trim_ws')
         let b:trim_ws = InitTrimWS()
+        call s:refresh_airline()
     endif
 
     if b:trim_ws == 1
