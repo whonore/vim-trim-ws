@@ -7,8 +7,12 @@ if !exists('g:trim_ws_verbose')
   let g:trim_ws_verbose = 1
 end
 
+let s:off = 0
+let s:all = 1
+let s:new = 2
+
 " Try to refresh airline plugin.
-function! s:refresh_airline()
+function! s:refresh_airline() abort
   try
     call airline#update_statusline()
   catch
@@ -16,33 +20,33 @@ function! s:refresh_airline()
 endfunction
 
 " Remember option and print new value.
-function! s:setTrim(trim, verbose)
+function! s:setTrim(trim, verbose) abort
   let b:trim_ws = a:trim
   call s:refresh_airline()
 
   if a:verbose
-    if a:trim == 0
+    if a:trim == s:off
       echom 'Trim WS off, Git Trim off'
-    elseif a:trim == 1
+    elseif a:trim == s:all
       echom 'Trim WS on'
-    elseif a:trim == 2
+    elseif a:trim == s:new
       echom 'Trim WS off, Git Trim on'
     endif
   endif
 endfunction
 
 " Cycle through trim_ws modes.
-function! s:cycleTrim()
+function! s:cycleTrim() abort
   if !exists('b:trim_ws')
-    " Default to 1 so resulting mode will be 2
-    let b:trim_ws = 1
+    " Default to s:all so resulting mode will be s:new
+    let b:trim_ws = s:all
   endif
 
   call s:setTrim((b:trim_ws + 1) % 3, g:trim_ws_verbose)
 endfunction
 
 " Check if file already has trailing whitespace.
-function! s:initTrimWS()
+function! s:initTrimWS() abort
   " For completion
   function! YesNo(ArgLead, CmdLine, CursorPos)
     return "Yes\nNo\nyes\nno"
@@ -53,17 +57,17 @@ function! s:initTrimWS()
     if input('File has trailing whitespace. Keep it? (y/n): ',
             \'',
             \'custom,YesNo') =~? '^n'
-      return 1
+      return s:all
     else
-      return 2
+      return s:new
     endif
   endif
 
-  return 1
+  return s:all
 endfunction
 
 " Remove trailing whitespace.
-function! s:trimLines(...)
+function! s:trimLines(...) abort
   let l:win = winsaveview()
 
   let l:lines = a:0 == 0 ? ['%'] : a:000[0]
@@ -75,20 +79,20 @@ function! s:trimLines(...)
 endfunction
 
 " Initialize if needed and trim whitespace.
-function! s:doTrim()
+function! s:doTrim() abort
   if !exists('b:trim_ws')
     let b:trim_ws = s:initTrimWS()
     call s:refresh_airline()
   endif
 
-  if b:trim_ws == 1
+  if b:trim_ws == s:all
     call s:trimLines()
   endif
 endfunction
 
 " Use git diff --check to look for newly introduced whitespace errors.
-function! s:gitTrim()
-  if b:trim_ws != 2
+function! s:gitTrim() abort
+  if b:trim_ws != s:new
     return
   endif
 
