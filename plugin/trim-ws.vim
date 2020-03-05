@@ -68,6 +68,10 @@ endfunction
 
 " Remove trailing whitespace.
 function! s:trimLines(...) abort
+  if !&modifiable
+    return
+  endif
+
   let l:win = winsaveview()
 
   let l:lines = a:0 == 0 ? ['%'] : a:000[0]
