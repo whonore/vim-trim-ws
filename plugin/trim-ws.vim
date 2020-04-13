@@ -7,38 +7,32 @@ let s:off = 0
 let s:all = 1
 let s:new = 2
 
-" Try to refresh airline plugin.
-augroup trim_ws
-  autocmd!
-  autocmd User TrimWSChanged silent! AirlineRefresh
-augroup END
+let s:msgs = {
+  \ s:off: 'Trim WS off, Git Trim off',
+  \ s:all: 'Trim WS on',
+  \ s:new: 'Trim WS off, Git Trim on'
+\}
 
 " Remember option and print new value.
-function! s:setTrim(trim, verbose) abort
+function! s:mode(trim, verbose) abort
   let b:trim_ws = a:trim
   doautocmd User TrimWSChanged
 
   if a:verbose
-    if a:trim == s:off
-      echom 'Trim WS off, Git Trim off'
-    elseif a:trim == s:all
-      echom 'Trim WS on'
-    elseif a:trim == s:new
-      echom 'Trim WS off, Git Trim on'
-    endif
+    echom s:msgs[a:trim]
   endif
 endfunction
 
 " Cycle through trim_ws modes.
-function! s:cycleTrim() abort
+function! s:cycle() abort
   " Default to s:all so resulting mode will be s:new
   let l:trim = get(b:, 'trim_ws', s:all)
   let l:verbose = get(g:, 'trim_ws_verbose', 1)
-  call s:setTrim((l:trim + 1) % 3, l:verbose)
+  call s:mode((l:trim + 1) % 3, l:verbose)
 endfunction
 
 " Check if file already has trailing whitespace.
-function! s:initTrimWS() abort
+function! s:init() abort
   " For completion
   function! YesNo(ArgLead, CmdLine, CursorPos)
     return "Yes\nNo\nyes\nno"
@@ -46,20 +40,17 @@ function! s:initTrimWS() abort
 
   " Ask if want to keep whitespace
   if search('\s\+$', 'n')
-    if input('File has trailing whitespace. Keep it? (y/n): ',
-            \'',
-            \'custom,YesNo') =~? '^n'
-      return s:all
-    else
-      return s:new
-    endif
+    return input(
+      \ 'File has trailing whitespace. Keep it? (y/n): ',
+      \ '',
+      \ 'custom,YesNo') =~? '^n' ? s:all : s:new
   endif
 
   return s:all
 endfunction
 
 " Remove trailing whitespace.
-function! s:trimLines(...) abort
+function! s:trim(...) abort
   if !&modifiable
     return
   endif
@@ -77,12 +68,12 @@ endfunction
 " Initialize if needed and trim whitespace.
 function! s:doTrim() abort
   if !exists('b:trim_ws')
-    let b:trim_ws = s:initTrimWS()
+    let b:trim_ws = s:init()
     doautocmd User TrimWSChanged
   endif
 
   if b:trim_ws == s:all
-    call s:trimLines()
+    call s:trim()
   endif
 endfunction
 
@@ -99,16 +90,17 @@ function! s:gitTrim() abort
     endif
   endfor
 
-  call s:trimLines(l:lines)
+  call s:trim(l:lines)
   update
 endfunction
 
-command! -bar TrimWSCycle call s:cycleTrim()
+command! -bar TrimWSCycle call s:cycle()
 nnoremap <silent> <leader>tw :TrimWSCycle<CR>
 
 augroup trimws
   autocmd!
   autocmd BufWritePre * call s:doTrim()
   autocmd BufWritePost * call s:gitTrim()
-  autocmd BufNewFile * call s:setTrim(1, 0)
+  autocmd BufNewFile * call s:mode(1, 0)
+  autocmd User TrimWSChanged silent! AirlineRefresh
 augroup END
