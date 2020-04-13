@@ -3,26 +3,20 @@ if exists('g:loaded_trim_ws')
 endif
 let g:loaded_trim_ws = 1
 
-if !exists('g:trim_ws_verbose')
-  let g:trim_ws_verbose = 1
-end
-
 let s:off = 0
 let s:all = 1
 let s:new = 2
 
 " Try to refresh airline plugin.
-function! s:refresh_airline() abort
-  try
-    call airline#update_statusline()
-  catch
-  endtry
-endfunction
+augroup trim_ws
+  autocmd!
+  autocmd User TrimWSChanged silent! AirlineRefresh
+augroup END
 
 " Remember option and print new value.
 function! s:setTrim(trim, verbose) abort
   let b:trim_ws = a:trim
-  call s:refresh_airline()
+  doautocmd User TrimWSChanged
 
   if a:verbose
     if a:trim == s:off
@@ -37,12 +31,10 @@ endfunction
 
 " Cycle through trim_ws modes.
 function! s:cycleTrim() abort
-  if !exists('b:trim_ws')
-    " Default to s:all so resulting mode will be s:new
-    let b:trim_ws = s:all
-  endif
-
-  call s:setTrim((b:trim_ws + 1) % 3, g:trim_ws_verbose)
+  " Default to s:all so resulting mode will be s:new
+  let l:trim = get(b:, 'trim_ws', s:all)
+  let l:verbose = get(g:, 'trim_ws_verbose', 1)
+  call s:setTrim((l:trim + 1) % 3, l:verbose)
 endfunction
 
 " Check if file already has trailing whitespace.
@@ -86,7 +78,7 @@ endfunction
 function! s:doTrim() abort
   if !exists('b:trim_ws')
     let b:trim_ws = s:initTrimWS()
-    call s:refresh_airline()
+    doautocmd User TrimWSChanged
   endif
 
   if b:trim_ws == s:all
