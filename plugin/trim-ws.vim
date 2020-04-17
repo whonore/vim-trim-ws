@@ -102,5 +102,5 @@ augroup trimws
   autocmd BufWritePre * call s:doTrim()
   autocmd BufWritePost * call s:gitTrim()
   autocmd BufNewFile * call s:mode(1, 0)
-  autocmd User TrimWSChanged silent! AirlineRefresh
+  autocmd User TrimWSChanged silent
 augroup END

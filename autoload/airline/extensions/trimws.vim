@@ -1,25 +1,25 @@
-if !exists('g:airline#extensions#trimws#all')
-  let g:airline#extensions#trimws#all = 'Trim All'
-endif
+function! s:letdef(var, val) abort
+  if !exists(a:var)
+    execute printf('let %s = %s', a:var, string(a:val))
+  endif
+endfunction
 
-if !exists('g:airline#extensions#trimws#new')
-  let g:airline#extensions#trimws#new = 'Trim New'
-endif
+call s:letdef('g:airline#extensions#trimws#all', 'Trim All')
+call s:letdef('g:airline#extensions#trimws#new', 'Trim New')
 
 let s:spc = g:airline_symbols.space
 
 function! airline#extensions#trimws#status() abort
-  return !exists('b:trim_ws') || b:trim_ws == 0 ? ''
-          \ : b:trim_ws == 1 ? g:airline#extensions#trimws#all
-          \ : g:airline#extensions#trimws#new
+  let l:mode = get(b:, 'trim_ws', 0)
+  let l:status =
+    \ l:mode == 1 ? g:airline#extensions#trimws#all
+    \ : l:mode == 2 ? g:airline#extensions#trimws#new
+    \ : ''
+  return l:status !=# '' ? s:spc . g:airline_left_sep . s:spc . l:status : ''
 endfunction
 
 function! airline#extensions#trimws#apply(...) abort
-  let l:status = airline#extensions#trimws#status()
-  if !empty(l:status)
-    call airline#extensions#append_to_section('a',
-          \ s:spc . g:airline_left_sep . s:spc . l:status)
-  endif
+  call airline#extensions#append_to_section('a', '%{airline#extensions#trimws#status()}')
 endfunction
 
 function! airline#extensions#trimws#init(ext) abort
