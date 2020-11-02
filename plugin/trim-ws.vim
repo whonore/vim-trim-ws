@@ -59,7 +59,7 @@ function! s:trim(...) abort
 
   let l:lines = a:0 == 0 ? ['%'] : a:000[0]
   for l:line in l:lines
-    execute l:line . 's/\s\+$//ge'
+    execute printf('keepjumps keeppatterns %ss/\s\+$//ge', l:line)
   endfor
 
   call winrestview(l:win)
