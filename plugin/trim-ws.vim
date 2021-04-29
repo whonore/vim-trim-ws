@@ -85,9 +85,12 @@ function! s:gitTrim() abort
 
   let l:lines = []
   for l:line in split(system('git diff --check ' . expand('%:p')), '\n')
-    if l:line =~# '[^:]*:\d\+: trailing whitespace.'
-      let l:lines = add(l:lines, split(l:line, ':')[1])
-    endif
+    try
+      let l:lines = add(
+        \ l:lines,
+        \ matchlist(l:line, '[^:]*:\(\d\+\): trailing whitespace.')[1])
+    catch /Vim\%((\a\+)\)\=:E684:/
+    endtry
   endfor
 
   call s:trim(l:lines)
